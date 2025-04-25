@@ -1,5 +1,20 @@
 package BPC;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.*;
+
+import org.apache.poi.sl.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 
 
 class Person {
@@ -147,6 +162,7 @@ class BPC {
     public void generateReport() {
         Map<String, List<String>> report = new HashMap<>();
         Map<String, Integer> countAttended = new HashMap<>();
+        
 
         for (Appointment appt : appointments) {
             String physio = appt.physio.name;
@@ -174,12 +190,127 @@ class BPC {
         countAttended.entrySet().stream()
                 .sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue()))
                 .forEach(e -> System.out.println("  " + e.getKey() + ": " + e.getValue() + " attended appointments"));
+        
+        // Path to the Excel file
+    File file = new File("PatientReport.xlsx");
+
+    // Delete the existing file (if any) to ensure overwrite
+    if (file.exists()) {
+        file.delete();
     }
+
+    // Create a new Excel workbook and sheet
+    XSSFWorkbook workbook = new XSSFWorkbook();
+    XSSFSheet sheet = workbook.createSheet("Patient Report");
+
+    
+
+    // Add header row
+    Row header = sheet.createRow(0);
+    header.createCell(0).setCellValue("Physiotherapist (Treatment)");
+    header.createCell(1).setCellValue("Patient ID");
+    header.createCell(2).setCellValue("Patient Name");
+    header.createCell(3).setCellValue("Patient Address");
+    header.createCell(4).setCellValue("Patient Phone");
+    header.createCell(5).setCellValue("Appointment Time");
+    header.createCell(6).setCellValue("Status");
+
+    // Set header style for better readability
+    CellStyle headerStyle = workbook.createCellStyle();
+    headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+    headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+    // Apply header style to the header cells
+    for (int i = 0; i < header.getPhysicalNumberOfCells(); i++) {
+        header.getCell(i).setCellStyle(headerStyle);
+    }
+
+    
+    // Use SimpleDateFormat to format the time values
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    // Writing the report data to the Excel sheet
+    int rowIndex = 1;
+    for (Appointment appt : appointments) {
+        String physio = appt.physio.name;
+        String treatmentName = appt.treatment.getTreatmentName();
+        String patientID = String.valueOf(appt.patient.id);
+        String patientName = appt.patient.name;
+        String patientAddress = appt.patient.address;
+        String patientPhone = appt.patient.phone;
+         // Format the appointment time
+         Date appointmentDate = appt.time; // Assuming appt.time is a Date object
+         String formattedTime = dateFormat.format(appointmentDate);
+         
+        String status = appt.status;
+
+        // Key for the report (Physiotherapist (Treatment))
+        String key = physio + " (" + treatmentName + ")";
+
+        // Write physiotherapist and treatment in the first column
+        Row row = sheet.createRow(rowIndex++);
+        row.createCell(0).setCellValue(key);
+
+        // Write patient details in the subsequent columns
+        row.createCell(1).setCellValue(patientID);
+        row.createCell(2).setCellValue(patientName);
+        row.createCell(3).setCellValue(patientAddress);
+        row.createCell(4).setCellValue(patientPhone);
+        row.createCell(5).setCellValue(formattedTime);
+        row.createCell(6).setCellValue(status);
+
+        // Add the patient details to the report map
+        report.computeIfAbsent(key, k -> new ArrayList<>()).add(patientName);
+
+        // Track attended appointments for attendance ranking
+        if (status.equals("Attended")) {
+            countAttended.put(physio, countAttended.getOrDefault(physio, 0) + 1);
+        }
+    }
+
+    // Writing the attendance ranking section
+    int rankRowStartIndex = rowIndex + 2;  // Adding some space before ranking section
+    Row rankHeader = sheet.createRow(rankRowStartIndex);
+    rankHeader.createCell(0).setCellValue("Physiotherapist");
+    rankHeader.createCell(1).setCellValue("Count");
+
+    // Apply header style to ranking header
+    rankHeader.getCell(0).setCellStyle(headerStyle);
+    rankHeader.getCell(1).setCellStyle(headerStyle);
+
+    rowIndex = rankRowStartIndex + 1;  // Next row for ranking data
+
+    // Write attendance ranking data to the sheet
+    for (Map.Entry<String, Integer> entry : countAttended.entrySet()) {
+        Row rankRow = sheet.createRow(rowIndex++);
+        rankRow.createCell(0).setCellValue(entry.getKey());
+        rankRow.createCell(1).setCellValue(entry.getValue());
+    }
+
+    // Adjust column widths for better readability
+    for (int i = 0; i < 7; i++) {
+        sheet.autoSizeColumn(i);  // Auto-size all columns from 0 to 6
+    }
+
+    // Write the Excel file to disk
+    try (FileOutputStream fileOut = new FileOutputStream(file)) {
+        workbook.write(fileOut);
+        workbook.close();
+        System.out.println("Report has been written to PatientReport.xlsx");
+    } catch (IOException e) {
+        e.printStackTrace();
+    }           
+                    
+                
+            }
 }
 
 public class Main {
+
+
     public static void main(String[] args) {
         BPC bpc = new BPC();
+        
 
         // Add Physiotherapists
         List<String> expertise1 = Arrays.asList("Physiotherapy", "Rehabilitation");
@@ -247,5 +378,8 @@ public class Main {
         System.out.println("Report:");
         // Generate Report
         bpc.generateReport();
+        
+
+
     }
 }
