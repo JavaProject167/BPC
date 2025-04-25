@@ -1,0 +1,32 @@
+# Maven target directory
+/target/
+
+# Logs
+*.log
+
+# Compiled class files
+*.class
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.jar
+*.war
+*.ear
+
+# Swap and backup files
+*.swp
+*.bak
+
+# Databases
+*.db
+
+# Others
+*.tmp
