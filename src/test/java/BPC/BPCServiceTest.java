@@ -3,6 +3,7 @@ package BPC;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 public class BPCServiceTest {
 
@@ -107,5 +108,10 @@ public class BPCServiceTest {
         bpc.generateReport();
 
         // No assertion here, but we visually inspect console output for correctness
+    }
+
+    @Test
+    public void testMainMethodRunsWithoutException() {
+        assertDoesNotThrow(() -> Main.main(new String[]{}), "Main method should run without throwing exceptions");
     }
 }
