@@ -150,11 +150,14 @@ class BPC {
 
         for (Appointment appt : appointments) {
             String physio = appt.physio.name;
-String patient = appt.patient.name;
-String key = physio + " (" + appt.treatment.getTreatmentName() + ")";
+            String patient = appt.patient.name;
+            String key = physio + " (" + appt.treatment.getTreatmentName() + ")";
 
           
-            report.computeIfAbsent(key, k -> new ArrayList<>()).add(patient + ", Time: " + appt.time + ", Status: " + appt.status);
+            String patientInfo = "ID: " + appt.patient.id + ", Name: " + appt.patient.name + ", Address: " + appt.patient.address + ", Phone: " + appt.patient.phone;
+            report.computeIfAbsent(key, k -> new ArrayList<>()).add(patientInfo + ", Time: " + appt.time + ", Status: " + appt.status);
+
+
             if (appt.status.equals("Attended")) {
                 countAttended.put(physio, countAttended.getOrDefault(physio, 0) + 1);
             }
